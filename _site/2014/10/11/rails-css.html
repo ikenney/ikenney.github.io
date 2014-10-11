@@ -1,0 +1,63 @@
+<p>** Rails CSS **</p>
+
+<p>This document describes how I plan to manage css on new rails projects.</p>
+
+<p><em>** Directory structure **</em></p>
+
+<pre><code>/app 
+  /assets
+    /stylesheets
+  application.scss
+  module1.scss
+  module2.scss
+      /includes
+    application_inc.scss
+    module1_inc.scss
+    module2_inc.scss
+  /embeded
+    application_embed.scss
+    module1_embed.scss
+    module2_embed.scss
+</code></pre>
+
+<ul>
+  <li>/stylesheets - contails stylesheets to be included via the asset pipeline</li>
+  <li>/styleshees/embeded - contains (minimal) style definitions to embed diectly within a page (to allow correct rendering before the appliction stylesheet has been downloaded).</li>
+  <li>/stylesheets/includes - contains all the scss mixins and variable definitions</li>
+</ul>
+
+<p><em>** Including stylesheets in layouts **</em></p>
+
+<p>include stylesheets via javascript before the losing body tag 
+(https://developers.google.com/speed/docs/insights/OptimizeCSSDelivery)</p>
+
+<pre><code>&lt;script&gt;
+  var cb = function() {
+    var l = document.createElement('link'); l.rel = 'stylesheet';
+    l.href = 'small.css';
+    var h = document.getElementsByTagName('head')[0]; h.parentNode.insertBefore(l, h);
+  };
+  var raf = requestAnimationFrame || mozRequestAnimationFrame ||
+      webkitRequestAnimationFrame || msRequestAnimationFrame;
+  if (raf) raf(cb);
+  else window.addEventListener('load', cb);
+&lt;/script&gt;
+</code></pre>
+
+<p>A helper function to aid this is recomended!</p>
+
+<p>include critial styles ( those needed to prevent the “Flash of Unstyled Content” ) in the head</p>
+
+<p>A helper along these lines can do the trick </p>
+
+<pre><code>def embed_scss(asset_name)
+  asset = Rails.application.assets.find_asset(asset_name)
+  Sass::Engine.new(
+    asset,
+    style: :compressed,
+    syntax: :scss,
+    line_comments: false
+  ).render
+end
+</code></pre>
+
